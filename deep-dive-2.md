@@ -400,6 +400,30 @@ async function pourGND(boardOutline) {
 
 ---
 
+## 4.5 Pour fill 验证 (Agent 关键发现)
+
+### IPCB_PrimitivePouredPourFill 真实结构
+
+```typescript
+interface IPCB_PrimitivePouredPourFill {
+  id: string;                     // 填充区域唯一 ID
+  path: IPCB_ComplexPolygon;      // 多边形轮廓 (可用 getSource() 取点)
+  lineWidth: number;              // mil
+  fill: boolean;                  // true=实心, false=仅轮廓
+}
+// ⚠️ 没有 area 字段 — 需用 MathPolygon 自己算
+// ⚠️ 没有 connectedPads 字段 — 需用几何包含判断
+```
+
+### rebuildCopperRegion 内部行为 (修正)
+
+- **运行在后台 worker** — 走 `pcb/decodePcbWorldInWorker` 通道
+- **必须顺序执行** — 多个 pour 并行 rebuild 可能因优先级交互导致结果不确定
+- **验证连接**: 唯一可靠方法是遍历焊盘坐标判断 `pointInPolygon` (没有直接 API)
+- **热焊检测**: 读 `pad.getState_HeatWelding().connectionMethod` → DIVERGENT/DIRECT_CONNECTED/NON_CONNECTED
+
+---
+
 ## 5. DRC 检查完整结构
 
 ### 5.1 调用方式
